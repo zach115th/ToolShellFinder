@@ -4,7 +4,7 @@ A PowerShell script for **detecting indicators of compromise (IoCs) for CVE-2025
 This script is hacked together to help DFIR teams, sysadmins, and security professionals identify suspicious activity associated with these vulnerabilities in SharePoint environments.
 
 **Version PS5 is being replaced by version PS7**
-- Version PS7 will only work in PowerShell 7
+- Version PS7 will only work in PowerShell 7 (https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.5#zip)
 
 ## Table of Contents
 
