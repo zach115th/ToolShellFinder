@@ -1,3 +1,5 @@
+#Nolonger supported please use the sigma rules or the powershell 7 version
+
 $logRoot = "C:\inetpub\logs\LogFiles"
 
 # --- IoC Set 1 ---
@@ -23,7 +25,7 @@ $userAgentIndicators = @("curl", "powershell", "python")
 # --- IoC Set 4 ---
 $uriStems4 = @("/_layouts/15/success.aspx", "/_layouts/16/success.aspx")
 $userAgentIndicators4 = @("curl", "powershell", "python")
-$viewstateRegex = "^__VIEWSTATE=.{40,}"  # base64 is usually quite long, so 40+ chars as threshold
+$viewstateRegex = "^__VIEWSTATE=.*"  # base64 is usually quite long, so 40+ chars as threshold
 
 $results = @()
 $logFiles = Get-ChildItem -Path $logRoot -Recurse -Include *.log
