@@ -103,7 +103,7 @@ $results = $logFiles | ForEach-Object -Parallel {
 
             { $methodVal -eq $using:method3 -and
               $stemVal   -match $using:uriWildcardRegex -and
-              ($using:userAgentIndicators | Where-Object { $uaVal -like "*$_*" }) } {
+              ($using:userAgentIndicators | Where-Object { $uaVal.ToLower() -like "*$($_.ToLower())*" }) } {
 
                 $hits += [pscustomobject]@{
                     IoCType   = 'LayoutsAspx_SuspiciousUA'
@@ -116,7 +116,7 @@ $results = $logFiles | ForEach-Object -Parallel {
 
             { $stemVal -match $using:uriWildcardRegex -and
               $queryVal -match $using:viewstateRegex -and
-              ($using:userAgentIndicators4 | Where-Object { $uaVal -like "*$_*" }) } {
+              ($using:userAgentIndicators | Where-Object { $uaVal.ToLower() -like "*$($_.ToLower())*" }) } {
 
                 $hits += [pscustomobject]@{
                     IoCType   = 'LayoutsAspx_ViewState_SuspiciousUA'
