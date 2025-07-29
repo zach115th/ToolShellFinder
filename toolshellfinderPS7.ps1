@@ -22,7 +22,8 @@ $uriFilePatterns = @(
     '3plx\.aspx',
     'debug_dev\.js',
     'info\.js',
-    'spinstaller\.aspx'
+    'spinstaller\.aspx';
+    'machinekey\.aspx'
 )
 $uriRegex2 = '^/_layouts/(15|16)/(' + ($uriFilePatterns -join '|').Replace('.','\.') + ')$'
 
