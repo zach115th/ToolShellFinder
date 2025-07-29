@@ -16,8 +16,13 @@ $referer1  = '/_layouts/SignOut.aspx'
 $method2   = 'GET'
 $referer2  = '/_layouts/SignOut.aspx'
 $uriFilePatterns = @(
-    'spinstall.aspx','spinstall0.aspx','spinstall1.aspx','spinstall2.aspx',
-    'xxx.aspx','3plx.aspx','debug_dev.js','info.js','spinstaller.aspx'
+    'spinstall\.aspx',
+    'spinstall.*\.aspx',
+    'xxx\.aspx',
+    '3plx\.aspx',
+    'debug_dev\.js',
+    'info\.js',
+    'spinstaller\.aspx'
 )
 $uriRegex2 = '^/_layouts/(15|16)/(' + ($uriFilePatterns -join '|').Replace('.','\.') + ')$'
 
