@@ -6,13 +6,13 @@ $requiredFields = @(
     'cs-uri-query','cs(User-Agent)','cs(Referer)'
 )
 
-# IoC Set 1 ─ ToolPane abuse
+# IoC Set 1 ─ ToolPane abuse
 $method1   = 'POST'
 $uriStems1 = @('/_layouts/15/ToolPane.aspx','/_layouts/16/ToolPane.aspx')
 $uriQuery1 = 'DisplayMode=Edit&a=/ToolPane.aspx'
 $referer1  = '/_layouts/SignOut.aspx'
 
-# IoC Set 2 ─ suspicious file names
+# IoC Set 2 ─ suspicious file names
 $method2   = 'GET'
 $referer2  = '/_layouts/SignOut.aspx'
 $uriFilePatterns = @(
@@ -27,12 +27,12 @@ $uriFilePatterns = @(
 )
 $uriRegex2 = '^/_layouts/(15|16)/(' + ($uriFilePatterns -join '|').Replace('.','\.') + ')$'
 
-# IoC Set 3 ─ any *.aspx under /_layouts/15|16/ with naughty UA strings
+# IoC Set 3 ─ any *.aspx under /_layouts/15|16/ with naughty UA strings
 $method3          = 'GET'
 $uriWildcardRegex = '^/_layouts/(15|16)/[^/]+\.aspx$'
 $userAgentIndicators  = @('curl','powershell','python')
 
-# IoC Set 4 ─ same wildcard + big VIEWSTATE + naughty UA strings
+# IoC Set 4 ─ same wildcard + big VIEWSTATE + naughty UA strings
 $userAgentIndicators4 = @('curl','powershell','python')
 $viewstateRegex       = '^__VIEWSTATE=.*'
 
@@ -74,6 +74,7 @@ $results = $logFiles | ForEach-Object -Parallel {
 
         switch ($true) {
 
+            # ToolPane POST IoC
             { $methodVal -eq $using:method1 -and
               $using:uriStems1 -contains $stemVal -and
               $queryVal -like "*$($using:uriQuery1)*" -and
@@ -88,6 +89,7 @@ $results = $logFiles | ForEach-Object -Parallel {
                 }
             }
 
+            # Suspicious GET IoC
             { $methodVal -eq $using:method2 -and
               $stemVal -match $using:uriRegex2 -and
               $refVal  -like "*$($using:referer2)*" } {
@@ -101,12 +103,13 @@ $results = $logFiles | ForEach-Object -Parallel {
                 }
             }
 
-            { $methodVal -eq $using:method3 -and
-              $stemVal   -match $using:uriWildcardRegex -and
+            # Most specific: ViewState + SuspiciousUA IoC
+            { $stemVal -match $using:uriWildcardRegex -and
+              $queryVal -match $using:viewstateRegex -and
               ($using:userAgentIndicators | Where-Object { $uaVal.ToLower() -like "*$($_.ToLower())*" }) } {
 
                 $hits += [pscustomobject]@{
-                    IoCType   = 'LayoutsAspx_SuspiciousUA'
+                    IoCType   = 'LayoutsAspx_ViewState_SuspiciousUA'
                     File      = $filePath
                     Date      = $dateVal; Time = $timeVal; Method = $methodVal
                     UserAgent = $uaVal;   UriStem = $stemVal;   UriQuery = $queryVal
@@ -114,12 +117,14 @@ $results = $logFiles | ForEach-Object -Parallel {
                 }
             }
 
-            { $stemVal -match $using:uriWildcardRegex -and
-              $queryVal -match $using:viewstateRegex -and
-              ($using:userAgentIndicators | Where-Object { $uaVal.ToLower() -like "*$($_.ToLower())*" }) } {
+            # More general: SuspiciousUA ONLY IF not ViewState
+            { $methodVal -eq $using:method3 -and
+              $stemVal   -match $using:uriWildcardRegex -and
+              ($using:userAgentIndicators | Where-Object { $uaVal.ToLower() -like "*$($_.ToLower())*" }) -and
+              -not ($queryVal -match $using:viewstateRegex) } {
 
                 $hits += [pscustomobject]@{
-                    IoCType   = 'LayoutsAspx_ViewState_SuspiciousUA'
+                    IoCType   = 'LayoutsAspx_SuspiciousUA'
                     File      = $filePath
                     Date      = $dateVal; Time = $timeVal; Method = $methodVal
                     UserAgent = $uaVal;   UriStem = $stemVal;   UriQuery = $queryVal
