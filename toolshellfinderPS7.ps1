@@ -8,7 +8,7 @@ $requiredFields = @(
 
 # IoC Set 1 ─ ToolPane abuse
 $method1   = 'POST'
-$uriStems1 = @('/_layouts/15/ToolPane.aspx','/_layouts/16/ToolPane.aspx')
+$uriStems1 = @('/_layouts/1.\*/ToolPane\.aspx')
 $uriQuery1 = 'DisplayMode=Edit&a=/ToolPane.aspx'
 $referer1  = '/_layouts/SignOut.aspx'
 
