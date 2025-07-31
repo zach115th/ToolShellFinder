@@ -1,4 +1,5 @@
 $logRoot = "C:\inetpub\logs\LogFiles"
+$ThrottleLimit = 12
 
 # ---------- constants ----------
 $requiredFields = @(
@@ -135,7 +136,7 @@ $results = $logFiles | ForEach-Object -Parallel {
     }
 
     $hits   # emit matches for this file
-} -ThrottleLimit 12
+} -ThrottleLimit $ThrottleLimit
 
 # ---------- output ----------
 if ($results) {
