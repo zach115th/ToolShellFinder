@@ -1,5 +1,5 @@
-$logRoot = "C:\inetpub\logs\LogFiles"
-$ThrottleLimit = 12
+$logRoot = "C:\inetpub\logs\LogFiles"    # Location of IIS logs
+$ThrottleLimit = 12                      # Processor core count
 
 # ---------- constants ----------
 $requiredFields = @(
