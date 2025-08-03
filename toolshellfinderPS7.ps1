@@ -1,27 +1,21 @@
 $logRoot       = "C:\inetpub\logs\LogFiles"    # Location of IIS logs
-$ThrottleLimit = 12                            # Processor core count
+$ThrottleLimit = 12                              # Processor core count
 
 # ---------- constants ----------
 $requiredFields = @(
-    'date',
-    'time',
-    'cs-method',
-    'cs-uri-stem',
-    'cs-uri-query',
-    'cs(User-Agent)',
-    'cs(Referer)',
-    'c-ip'
+    'date','time','cs-method','cs-uri-stem','cs-uri-query',
+    'cs(User-Agent)','cs(Referer)','c-ip'
 )
 
-# IoC Set 1 ─ ToolPane abuse
-$method1   = 'POST'
-$uriStems1 = @('/_layouts/1.\*/ToolPane\.aspx')
-$uriQuery1 = 'DisplayMode=Edit&a=/ToolPane.aspx'
-$referer1  = '/_layouts/SignOut.aspx'
+# IoC Set 1 ─ ToolPane abuse (POST)
+$method1        = 'POST'
+$uriStems1Regex = '^/_layouts/(15|16)/ToolPane\.aspx$'  # Add more versions if needed
+$uriQuery1      = 'DisplayMode=Edit&a=/ToolPane.aspx'
+$referer1       = '/_layouts/SignOut.aspx'
 
-# IoC Set 2 ─ suspicious file names
-$method2   = 'GET'
-$referer2  = '/_layouts/SignOut.aspx'
+# IoC Set 2 ─ suspicious file names (GET)
+$method2       = 'GET'
+$referer2      = '/_layouts/SignOut.aspx'
 $uriFilePatterns = @(
     'spinstall\.aspx',
     'spinstall.*\.aspx',
@@ -31,18 +25,18 @@ $uriFilePatterns = @(
     'info\.js',
     'spinstaller\.aspx',
     'machinekey\.aspx',
-    'info.\*\.js'
+    'info.*\.js'
 )
-$uriRegex2 = '^/_layouts/(15|16)/(' + ($uriFilePatterns -join '|').Replace('.','\.') + ')$'
+$uriRegex2 = '^/_layouts/(15|16)/(' + ($uriFilePatterns -join '|') + ')$'
 
-# IoC Set 3 ─ any *.aspx under /_layouts/15|16/ with naughty UA strings
-$uriWildcardRegex   = '^/_layouts/(15|16)/[^/]+\.aspx$'
-$userAgentIndicators= @('curl','powershell','python')
+# IoC Set 3 ─ any *.aspx under /_layouts/15|16/ with suspicious UA strings (POST)
+$uriWildcardRegex     = '^/_layouts/(15|16)/[^/]+\.aspx$'
+$userAgentIndicators  = @('curl','powershell','python')
 
 # IoC Set 4 ─ wildcard + big VIEWSTATE + naughty UA strings
-$viewstateRegex       = '^__VIEWSTATE=.*'
+$viewstateRegex = '^__VIEWSTATE=.*'
 
-# IoC Set 5 ─ client IP in external Toolshell IoC list ------------------------
+# IoC Set 5 ─ client IP in external Toolshell IoC list
 $ipListUrl = 'https://raw.githubusercontent.com/zach115th/BlockLists/main/emerging-threats/2025/toolshell/toolshell_ips.txt'
 try {
     $ipIoCList = (Invoke-WebRequest -UseBasicParsing -Uri $ipListUrl).Content -split "`n" |
@@ -93,11 +87,11 @@ $results = $logFiles | ForEach-Object -Parallel {
 
         switch ($true) {
 
-            # IoC 1 – ToolPane POST
+            # IoC 1 – ToolPane POST (regex match, not literal!)
             { $methodVal -eq $using:method1 -and
-              $using:uriStems1 -contains $stemVal -and
-              $queryVal -like "*$($using:uriQuery1)*" -and
-              $refVal   -like "*$($using:referer1)*" } {
+              $stemVal   -match $using:uriStems1Regex -and
+              $queryVal  -like "*$($using:uriQuery1)*" -and
+              $refVal    -like "*$($using:referer1)*" } {
 
                 $hits += [pscustomobject]@{
                     IoCType   = 'ToolPane_POST'
@@ -111,8 +105,8 @@ $results = $logFiles | ForEach-Object -Parallel {
 
             # IoC 2 – Suspicious GET
             { $methodVal -eq $using:method2 -and
-              $stemVal -match $using:uriRegex2 -and
-              $refVal  -like "*$($using:referer2)*" } {
+              $stemVal   -match $using:uriRegex2 -and
+              $refVal    -like "*$($using:referer2)*" } {
 
                 $hits += [pscustomobject]@{
                     IoCType   = 'Suspicious_GET'
