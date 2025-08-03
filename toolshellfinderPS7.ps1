@@ -6,16 +6,15 @@ $requiredFields = @(
     'date','time','cs-method','cs-uri-stem','cs-uri-query',
     'cs(User-Agent)','cs(Referer)','c-ip'
 )
+$uriWildcardRegex	= '^/_layouts/(15|16)/[^/]+\.aspx$'
+$referer		= '/_layouts/SignOut.aspx'
 
 # IoC Set 1 ─ ToolPane abuse (POST)
 $method1        = 'POST'
-$uriStems1Regex = '^/_layouts/(15|16)/ToolPane\.aspx$'  # Add more versions if needed
 $uriQuery1      = 'DisplayMode=Edit&a=/ToolPane.aspx'
-$referer1       = '/_layouts/SignOut.aspx'
 
 # IoC Set 2 ─ suspicious file names (GET)
 $method2       = 'GET'
-$referer2      = '/_layouts/SignOut.aspx'
 $uriFilePatterns = @(
     'spinstall\.aspx',
     'spinstall.*\.aspx',
@@ -30,8 +29,7 @@ $uriFilePatterns = @(
 $uriRegex2 = '^/_layouts/(15|16)/(' + ($uriFilePatterns -join '|') + ')$'
 
 # IoC Set 3 ─ any *.aspx under /_layouts/15|16/ with suspicious UA strings (POST)
-$uriWildcardRegex     = '^/_layouts/(15|16)/[^/]+\.aspx$'
-$userAgentIndicators  = @('curl','powershell','python')
+$userAgentIndicators  = @('curl','powershell','python', 'java')
 
 # IoC Set 4 ─ wildcard + big VIEWSTATE + naughty UA strings
 $viewstateRegex = '^__VIEWSTATE=.*'
@@ -44,7 +42,7 @@ try {
                  Where-Object { $_ -and ($_ -notmatch '^\s*#') }
     Write-Host "`nDownloaded $($ipIoCList.Count) IP addresses from IoC list."
 } catch {
-    Write-Warning "`nUnable to download IP list: $_"
+    Write-Warning "Unable to download IP list: $_"
     $ipIoCList = @()
 }
 
@@ -89,9 +87,9 @@ $results = $logFiles | ForEach-Object -Parallel {
 
             # IoC 1 – ToolPane POST (regex match, not literal!)
             { $methodVal -eq $using:method1 -and
-              $stemVal   -match $using:uriStems1Regex -and
+              $stemVal   -match $using:uriWildcardRegex -and
               $queryVal  -like "*$($using:uriQuery1)*" -and
-              $refVal    -like "*$($using:referer1)*" } {
+              $refVal    -like "*$($using:referer)*" } {
 
                 $hits += [pscustomobject]@{
                     IoCType   = 'ToolPane_POST'
@@ -106,7 +104,7 @@ $results = $logFiles | ForEach-Object -Parallel {
             # IoC 2 – Suspicious GET
             { $methodVal -eq $using:method2 -and
               $stemVal   -match $using:uriRegex2 -and
-              $refVal    -like "*$($using:referer2)*" } {
+              $refVal    -like "*$($using:referer)*" } {
 
                 $hits += [pscustomobject]@{
                     IoCType   = 'Suspicious_GET'
