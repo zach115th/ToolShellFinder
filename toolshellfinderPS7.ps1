@@ -1,10 +1,16 @@
-$logRoot = "C:\inetpub\logs\LogFiles"    # Location of IIS logs
-$ThrottleLimit = 12                      # Processor core count
+$logRoot       = "C:\inetpub\logs\LogFiles"    # Location of IIS logs
+$ThrottleLimit = 12                           # Processor core count
 
 # ---------- constants ----------
 $requiredFields = @(
-    'date','time','cs-method','cs-uri-stem',
-    'cs-uri-query','cs(User-Agent)','cs(Referer)'
+    'date',
+    'time',
+    'cs-method',
+    'cs-uri-stem',
+    'cs-uri-query',
+    'cs(User-Agent)',
+    'cs(Referer)',
+    'c-ip'
 )
 
 # IoC Set 1 ─ ToolPane abuse
@@ -29,13 +35,24 @@ $uriFilePatterns = @(
 $uriRegex2 = '^/_layouts/(15|16)/(' + ($uriFilePatterns -join '|').Replace('.','\.') + ')$'
 
 # IoC Set 3 ─ any *.aspx under /_layouts/15|16/ with naughty UA strings
-$method3          = 'GET'
-$uriWildcardRegex = '^/_layouts/(15|16)/[^/]+\.aspx$'
-$userAgentIndicators  = @('curl','powershell','python')
+$method3            = 'GET'
+$uriWildcardRegex   = '^/_layouts/(15|16)/[^/]+\.aspx$'
+$userAgentIndicators= @('curl','powershell','python')
 
-# IoC Set 4 ─ same wildcard + big VIEWSTATE + naughty UA strings
-$userAgentIndicators4 = @('curl','powershell','python')
+# IoC Set 4 ─ wildcard + big VIEWSTATE + naughty UA strings
 $viewstateRegex       = '^__VIEWSTATE=.*'
+
+# IoC Set 5 ─ client IP in external Toolshell IoC list ------------------------
+$ipListUrl = 'https://raw.githubusercontent.com/zach115th/BlockLists/main/emerging-threats/2025/toolshell/toolshell_ips.txt'
+try {
+    $ipIoCList = (Invoke-WebRequest -UseBasicParsing -Uri $ipListUrl).Content -split "`n" |
+                 ForEach-Object { $_.Trim() } |
+                 Where-Object { $_ -and ($_ -notmatch '^\s*#') }
+    Write-Host "Downloaded $($ipIoCList.Count) IP addresses from IoC list."
+} catch {
+    Write-Warning "Unable to download IP list: $_"
+    $ipIoCList = @()
+}
 
 # ---------- gather log files ----------
 $logFiles = Get-ChildItem -Path $logRoot -Recurse -Include *.log
@@ -64,18 +81,19 @@ $results = $logFiles | ForEach-Object -Parallel {
         if (-not $headerSeen -or $line.StartsWith('#') -or [string]::IsNullOrWhiteSpace($line)) { continue }
         if ($line.IndexOf('/_layouts') -lt 0) { continue }
 
-        $cols      = $line.Split(' ')
-        $dateVal   = $cols[$fieldIdx['date']]
-        $timeVal   = $cols[$fieldIdx['time']]
-        $methodVal = $cols[$fieldIdx['cs-method']]
-        $uaVal     = $cols[$fieldIdx['cs(User-Agent)']]
-        $stemVal   = $cols[$fieldIdx['cs-uri-stem']]
-        $queryVal  = $cols[$fieldIdx['cs-uri-query']]
-        $refVal    = $cols[$fieldIdx['cs(Referer)']]
+        $cols        = $line.Split(' ')
+        $dateVal     = $cols[$fieldIdx['date']]
+        $timeVal     = $cols[$fieldIdx['time']]
+        $methodVal   = $cols[$fieldIdx['cs-method']]
+        $uaVal       = $cols[$fieldIdx['cs(User-Agent)']]
+        $stemVal     = $cols[$fieldIdx['cs-uri-stem']]
+        $queryVal    = $cols[$fieldIdx['cs-uri-query']]
+        $refVal      = $cols[$fieldIdx['cs(Referer)']]
+        $clientIpVal = $fieldIdx.ContainsKey('c-ip') ? $cols[$fieldIdx['c-ip']] : ''
 
         switch ($true) {
 
-            # ToolPane POST IoC
+            # IoC 1 – ToolPane POST
             { $methodVal -eq $using:method1 -and
               $using:uriStems1 -contains $stemVal -and
               $queryVal -like "*$($using:uriQuery1)*" -and
@@ -85,12 +103,13 @@ $results = $logFiles | ForEach-Object -Parallel {
                     IoCType   = 'ToolPane_POST'
                     File      = $filePath
                     Date      = $dateVal; Time = $timeVal; Method = $methodVal
+                    ClientIP  = $clientIpVal
                     UserAgent = $uaVal;   UriStem = $stemVal;   UriQuery = $queryVal
                     Referer   = $refVal;  Line = $line
                 }
             }
 
-            # Suspicious GET IoC
+            # IoC 2 – Suspicious GET
             { $methodVal -eq $using:method2 -and
               $stemVal -match $using:uriRegex2 -and
               $refVal  -like "*$($using:referer2)*" } {
@@ -99,12 +118,13 @@ $results = $logFiles | ForEach-Object -Parallel {
                     IoCType   = 'Suspicious_GET'
                     File      = $filePath
                     Date      = $dateVal; Time = $timeVal; Method = $methodVal
+                    ClientIP  = $clientIpVal
                     UserAgent = $uaVal;   UriStem = $stemVal;   UriQuery = $queryVal
                     Referer   = $refVal;  Line = $line
                 }
             }
 
-            # Most specific: ViewState + SuspiciousUA IoC
+            # IoC 3 – ViewState + SuspiciousUA
             { $stemVal -match $using:uriWildcardRegex -and
               $queryVal -match $using:viewstateRegex -and
               ($using:userAgentIndicators | Where-Object { $uaVal.ToLower() -like "*$($_.ToLower())*" }) } {
@@ -113,12 +133,13 @@ $results = $logFiles | ForEach-Object -Parallel {
                     IoCType   = 'LayoutsAspx_ViewState_SuspiciousUA'
                     File      = $filePath
                     Date      = $dateVal; Time = $timeVal; Method = $methodVal
+                    ClientIP  = $clientIpVal
                     UserAgent = $uaVal;   UriStem = $stemVal;   UriQuery = $queryVal
                     Referer   = $refVal;  Line = $line
                 }
             }
 
-            # More general: SuspiciousUA ONLY IF not ViewState
+            # IoC 4 – SuspiciousUA (no ViewState)
             { $methodVal -eq $using:method3 -and
               $stemVal   -match $using:uriWildcardRegex -and
               ($using:userAgentIndicators | Where-Object { $uaVal.ToLower() -like "*$($_.ToLower())*" }) -and
@@ -128,6 +149,20 @@ $results = $logFiles | ForEach-Object -Parallel {
                     IoCType   = 'LayoutsAspx_SuspiciousUA'
                     File      = $filePath
                     Date      = $dateVal; Time = $timeVal; Method = $methodVal
+                    ClientIP  = $clientIpVal
+                    UserAgent = $uaVal;   UriStem = $stemVal;   UriQuery = $queryVal
+                    Referer   = $refVal;  Line = $line
+                }
+            }
+
+            # IoC 5 – Malicious client IP
+            { $clientIpVal -and ($using:ipIoCList -contains $clientIpVal) } {
+
+                $hits += [pscustomobject]@{
+                    IoCType   = 'Malicious_ClientIP'
+                    File      = $filePath
+                    Date      = $dateVal; Time = $timeVal; Method = $methodVal
+                    ClientIP  = $clientIpVal
                     UserAgent = $uaVal;   UriStem = $stemVal;   UriQuery = $queryVal
                     Referer   = $refVal;  Line = $line
                 }
@@ -140,7 +175,6 @@ $results = $logFiles | ForEach-Object -Parallel {
 
 # ---------- output ----------
 if ($results) {
-    #$results | Format-Table -AutoSize
     $results | Export-Csv -Path .\IIS_IoC_Matches.csv -NoTypeInformation
     Write-Host "`nMatches exported to IIS_IoC_Matches.csv`n"
 } else {
