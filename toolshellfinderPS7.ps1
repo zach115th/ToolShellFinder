@@ -30,12 +30,12 @@ $uriFilePatterns = @(
     'debug_dev\.js',
     'info\.js',
     'spinstaller\.aspx',
-    'machinekey\.aspx'
+    'machinekey\.aspx',
+    'info.\*\.js'
 )
 $uriRegex2 = '^/_layouts/(15|16)/(' + ($uriFilePatterns -join '|').Replace('.','\.') + ')$'
 
 # IoC Set 3 ─ any *.aspx under /_layouts/15|16/ with naughty UA strings
-$method3            = 'GET'
 $uriWildcardRegex   = '^/_layouts/(15|16)/[^/]+\.aspx$'
 $userAgentIndicators= @('curl','powershell','python')
 
@@ -124,7 +124,7 @@ $results = $logFiles | ForEach-Object -Parallel {
                 }
             }
 
-            # IoC 3 – ViewState + SuspiciousUA
+            # IoC 4 – ViewState + SuspiciousUA
             { $stemVal -match $using:uriWildcardRegex -and
               $queryVal -match $using:viewstateRegex -and
               ($using:userAgentIndicators | Where-Object { $uaVal.ToLower() -like "*$($_.ToLower())*" }) } {
@@ -139,8 +139,8 @@ $results = $logFiles | ForEach-Object -Parallel {
                 }
             }
 
-            # IoC 4 – SuspiciousUA (no ViewState)
-            { $methodVal -eq $using:method3 -and
+            # IoC 3 – SuspiciousUA (no ViewState)
+            { $methodVal -eq $using:method1 -and
               $stemVal   -match $using:uriWildcardRegex -and
               ($using:userAgentIndicators | Where-Object { $uaVal.ToLower() -like "*$($_.ToLower())*" }) -and
               -not ($queryVal -match $using:viewstateRegex) } {
