@@ -42,9 +42,9 @@ try {
     $ipIoCList = (Invoke-WebRequest -UseBasicParsing -Uri $ipListUrl).Content -split "`n" |
                  ForEach-Object { $_.Trim() } |
                  Where-Object { $_ -and ($_ -notmatch '^\s*#') }
-    Write-Host "Downloaded $($ipIoCList.Count) IP addresses from IoC list."
+    Write-Host "`nDownloaded $($ipIoCList.Count) IP addresses from IoC list."
 } catch {
-    Write-Warning "Unable to download IP list: $_"
+    Write-Warning "`nUnable to download IP list: $_"
     $ipIoCList = @()
 }
 
