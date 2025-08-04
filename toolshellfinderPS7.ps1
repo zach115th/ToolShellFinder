@@ -109,11 +109,8 @@ $results = $logFiles | ForEach-Object -Parallel {
 
 	    # CVE-2025-53770
 	    { $methodVal -in $using:method -and
-    	      $stemVal   -match $using:uriRegex -and (
-              # If $using:referer is empty or null, skip the check;
-              # otherwise require a match
-              [string]::IsNullOrEmpty($using:referer) -or
-              $refVal -like "*$($using:referer)*")} {
+    	      $stemVal   -match $using:uriRegex -and
+              $refVal -like "*$($using:referer)*"} {
 	      		$iocType = if ($methodVal -eq 'POST') {
         			'CVE-2025-53770_POST'
     			} else {
