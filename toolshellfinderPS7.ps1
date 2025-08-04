@@ -26,7 +26,11 @@ $uriFilePatterns = @(
     'info\.js',
     'spinstaller\.aspx',
     'machinekey\.aspx',
-    'info.*\.js'
+    'info.*\.js',
+    'ghostfile\.aspx',
+    'ghostfile.*\.aspx',
+    'ghost\.aspx',
+    'ghost.*\.aspx'
 )
 $uriRegex = '^/_layouts/(15|16)/(' + ($uriFilePatterns -join '|') + ')$'
 
