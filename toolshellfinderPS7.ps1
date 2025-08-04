@@ -1,4 +1,4 @@
-$logRoot       = "C:\inetpub\logs\LogFiles"    # Location of IIS logs
+$logRoot       = "C:\inetpub\logs\LogFiles"      # Location of IIS logs
 $ThrottleLimit = 12                              # Processor core count
 
 # ---------- constants ----------
@@ -7,14 +7,14 @@ $requiredFields = @(
     'cs(User-Agent)','cs(Referer)','c-ip'
 )
 $uriWildcardRegex	= '^/_layouts/(15|16)/[^/]+\.aspx$'
-$referer		= '/_layouts/SignOut.aspx'
+$referer		    = '/_layouts/SignOut.aspx'
 
 # IoC Set 1 ─ ToolPane abuse (POST)
 $method1        = 'POST'
 $uriQuery1      = 'DisplayMode=Edit&a=/ToolPane.aspx'
 
 # IoC Set 2 ─ suspicious file names (GET)
-$method2       = 'GET'
+$method2         = 'GET'
 $uriFilePatterns = @(
     'spinstall\.aspx',
     'spinstall.*\.aspx',
@@ -40,9 +40,9 @@ try {
     $ipIoCList = (Invoke-WebRequest -UseBasicParsing -Uri $ipListUrl).Content -split "`n" |
                  ForEach-Object { $_.Trim() } |
                  Where-Object { $_ -and ($_ -notmatch '^\s*#') }
-    Write-Host "`nDownloaded $($ipIoCList.Count) IP addresses from IoC list."
+    Write-Host "`nDownloaded $($ipIoCList.Count) IP addresses from IoC list." -ForegroundColor Green
 } catch {
-    Write-Warning "Unable to download IP list: $_"
+    Write-Warning "Unable to download IP list: $_" -ForegroundColor Red
     $ipIoCList = @()
 }
 
@@ -168,7 +168,7 @@ $results = $logFiles | ForEach-Object -Parallel {
 # ---------- output ----------
 if ($results) {
     $results | Export-Csv -Path .\IIS_IoC_Matches.csv -NoTypeInformation
-    Write-Host "`nMatches exported to IIS_IoC_Matches.csv`n"
+    Write-Host "`nMatches exported to IIS_IoC_Matches.csv`n" -ForegroundColor Red
 } else {
-    Write-Host 'No matches found.`n'
+    Write-Host 'No matches found.`n' -ForegroundColor Green
 }
