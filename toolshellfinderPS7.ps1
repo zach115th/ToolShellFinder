@@ -155,5 +155,5 @@ if ($results) {
     $results | Export-Csv -Path .\IIS_IoC_Matches.csv -NoTypeInformation
     Write-Host "`nMatches exported to IIS_IoC_Matches.csv`n" -ForegroundColor Red
 } else {
-    Write-Host 'No matches found.`n' -ForegroundColor Green
+    Write-Host "No matches found.`n" -ForegroundColor Green
 }
