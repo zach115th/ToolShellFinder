@@ -16,7 +16,7 @@ $requiredFields = @(
 $method        		= @('POST', 'GET')
 $uriStemRegex		= '^/_layouts/(15|16)/ToolPane\.aspx$'
 $uriQuery      		= 'DisplayMode=Edit&a=/ToolPane.aspx'
-$referer		= @("/_layouts/SignOut.aspx", " ")
+$referer		= @("/_layouts/SignOut.aspx", "-")
 $uriFilePatterns = @(
     'spinstall\.aspx',
     'spinstall.*\.aspx',
