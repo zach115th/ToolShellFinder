@@ -50,6 +50,8 @@ try {
 $logFiles = Get-ChildItem -Path $logRoot -Recurse -Include *.log
 
 # ---------- parallel scan ----------
+Write-Host "`nScan Stared..."
+
 $results = $logFiles | ForEach-Object -Parallel {
 
     $logFile    = $_
