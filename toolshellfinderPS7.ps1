@@ -118,17 +118,17 @@ $results = $logFiles | ForEach-Object -Parallel {
     			}
 
     		$hits += [pscustomobject]@{
-        		IoCType   = $iocType
-        		File      = $filePath
-        		Date      = $dateVal
-        		Time      = $timeVal
-        		Method    = $methodVal
-        		ClientIP  = $clientIpVal
-        		UserAgent = $uaVal
-        		UriStem   = $stemVal
-        		UriQuery  = $queryVal
-        		Referer   = $refVal
-        		Line      = $line
+        	    IoCType   = $iocType
+        	    File      = $filePath
+        	    Date      = $dateVal
+        	    Time      = $timeVal
+        	    Method    = $methodVal
+        	    ClientIP  = $clientIpVal
+        	    UserAgent = $uaVal
+        	    UriStem   = $stemVal
+        	    UriQuery  = $queryVal
+        	    Referer   = $refVal
+        	    Line      = $line
     	      	}
 	    }
 
