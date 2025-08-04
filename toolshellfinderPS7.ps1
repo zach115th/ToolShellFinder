@@ -1,4 +1,4 @@
-$logRoot       = "F:\C\inetpub\logs\LogFiles"      # Location of IIS logs
+$logRoot       = "C:\inetpub\logs\LogFiles"      # Location of IIS logs
 $ThrottleLimit = 12                              # Processor core count
 
 # ---------- constants ----------
