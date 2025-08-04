@@ -16,7 +16,7 @@ $requiredFields = @(
 $method        		= @('POST', 'GET')
 $uriStemRegex		= '^/_layouts/(15|16)/ToolPane\.aspx$'
 $uriQuery      		= 'DisplayMode=Edit&a=/ToolPane.aspx'
-$referer		= '/_layouts/SignOut.aspx'
+$referer		= @("/_layouts/SignOut.aspx", " ")
 $uriFilePatterns = @(
     'spinstall\.aspx',
     'spinstall.*\.aspx',
@@ -85,7 +85,7 @@ $results = $logFiles | ForEach-Object -Parallel {
             { $methodVal -in $using:method -and
               $stemVal   -match $using:uriStemRegex -and
               $queryVal  -like "*$($using:uriQuery)*" -and
-              $refVal    -like "*$($using:referer)*" } {
+              $refVal    -in $using:referer } {
 	      $iocType = if ($methodVal -eq 'POST') {
 				'CVE-2025-53771_POST'
     			} else {
@@ -110,7 +110,7 @@ $results = $logFiles | ForEach-Object -Parallel {
 	    # CVE-2025-53770
 	    { $methodVal -in $using:method -and
     	      $stemVal   -match $using:uriRegex -and
-              $refVal -like "*$($using:referer)*"} {
+              $refVal -in $using:referer} {
 	      		$iocType = if ($methodVal -eq 'POST') {
         			'CVE-2025-53770_POST'
     			} else {
