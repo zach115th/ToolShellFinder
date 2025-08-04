@@ -129,8 +129,8 @@ $results = $logFiles | ForEach-Object -Parallel {
         	UriQuery  = $queryVal
         	Referer   = $refVal
         	Line      = $line
-    		}
-	}
+    	      }
+	    }
 
             # IoC 5 – Malicious client IP
             { $clientIpVal -and ($using:ipIoCList -contains $clientIpVal) } {
