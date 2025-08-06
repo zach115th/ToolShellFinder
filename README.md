@@ -1,69 +1,103 @@
-# ToolShellFinder: CVE-2025-53770 & CVE-2025-53771 Detection
+# 🛠️ ToolShellFinder: CVE-2025-53770 & CVE-2025-53771 Detection
 
-A PowerShell script for **detecting indicators of compromise (IoCs) for CVE-2025-53770 and CVE-2025-53771** in Microsoft IIS logs.  
-This script is hacked together to help DFIR teams, sysadmins, and security professionals identify suspicious activity associated with these vulnerabilities in SharePoint environments.
+A high-performance PowerShell 7+ script for scanning IIS logs to detect signs of exploitation related to **ToolShell**, specifically targeting the zero-day vulnerabilities **CVE-2025-53770** and **CVE-2025-53771** in Microsoft SharePoint.
+
+This script is hacked together to help DFIR teams, sysadmins, and security professionals identify suspicious activity associated with these vulnerabilities in SharePoint environments and is ideal for defenders who prefer native PowerShell.
 
 **Version PS5 is being replaced by version PS7**
-- Version PS7 will only work in PowerShell 7 (https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.5#zip)
+- Version PS7 will only work in PowerShell 7+ (https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.5#zip)
 
-## Table of Contents
+## 📘 Table of Contents
 
 - [Background](#background)
-- [What This Script Does](#what-this-script-does)
-- [Usage](#usage)
-- [Indicators of Compromise](#indicators-of-compromise)
+- [Key Features](#key-features)
+- [Requirements](#requirements)
+- [How to Use](#how-to-use)
+- [Detection Logic](#detection-logic)
 
 ---
 
-## Background
+## ⚠️ Background
 
 **CVE-2025-53770** and **CVE-2025-53771** are recently disclosed vulnerabilities affecting Microsoft SharePoint, potentially allowing remote code execution and exploitation via crafted requests to `/ToolPane.aspx`, suspicious uploads, or exploitation of ViewState parameters. Attackers may leave forensic traces in IIS logs.
 
 ---
 
-## What This Script Does
+## 📌 Key Features
 
-- **Recursively scans IIS log files** for patterns linked to exploitation attempts of these CVEs.
-- **Identifies and collects matches** for four major sets of IoCs (see below).
-- **Outputs a summary table** of detected events and exports detailed results to CSV for further analysis.
+- 🔍 Scans **IIS W3C logs** recursively from a given root directory.
+- 🧠 Detects:
+  - ToolPane abuse (`ToolPane.aspx` exploitation)
+  - Suspicious file accesses (e.g. `spinstall.aspx`, `ghostfile.aspx`, etc.)
+  - Requests from known **malicious IPs** (via external blocklist)
+- ⚙️ Fully parallelized using `ForEach-Object -Parallel` for speed.
+- 🧾 Outputs CSV results for DFIR reporting or SIEM ingestion.
 
 ---
 
-## Usage
+## 💻 Requirements
 
-1. **Copy the script to your investigation workstation.**
-2. **Set the `$logRoot` path** at the top of the script if your IIS logs are not in `C:\inetpub\logs\LogFiles`.
-3. **Run the script in a PowerShell window:**
+- PowerShell 7.0 or newer
+- Admin/Read access to IIS log files
+- Internet access to retrieve remote IP blocklist (optional)
+
+---
+
+## 🚀 How to Use
+
+1. **Edit the top of the script:**
+   ```powershell
+    $logRoot       = "C:\inetpub\logs\LogFiles"  # Your log folder
+    $ThrottleLimit = 12                          # Number of parallel threads
+   ```
+2. **Run the script:**
+   ```powershell
+   .\toolshellfinderPS7.ps1
+   ```
+3. **Results will be saved to:**
 
    ```powershell
-   .\toolshellfinder.ps1
+   IIS_IoC_Matches.csv
    ```
 
    ---
 
-## Indicators of Compromise
+## 📌 Detection Logic
 
-1. **ToolPane Exploitation Attempts (POST)**
-- HTTP Method: POST
-- Path: /_layouts/15/ToolPane.aspx or /_layouts/16/ToolPane.aspx
-- Query String: Contains DisplayMode=Edit&a=/ToolPane.aspx
-- Referer: Contains /_layouts/SignOut.aspx
-
-2. **Suspicious File Drops (GET)**
-- HTTP Method: GET
-- Referer: Contains /_layouts/SignOut.aspx
-- Path: Matches suspicious files in /layouts/15/ or /layouts/16/ (e.g., spinstall.aspx, debug_dev.js, etc.)
-
-3. **start.aspx Enumeration (GET, Suspicious User-Agent)**
-- HTTP Method: GET
-- Path: /_layouts/15/start.aspx or /_layouts/16/start.aspx
-- User-Agent: Contains curl, powershell, or python (case-insensitive, anywhere in UA string)
-
-4. **Malicious success.aspx & ViewState (Suspicious User-Agent & Query)**
-- Path: /_layouts/15/success.aspx or /_layouts/16/success.aspx
-- Query String: Starts with a long __VIEWSTATE= value (≥40 chars, indicative of payloads)
-- User-Agent: Contains curl, powershell, or python
+✅ IoC Set 1 — CVE-2025-53771 (ToolPane abuse)
+   - **POST or GET to:**
+     ```powershell
+     /_layouts/15/ToolPane.aspx
+      /_layouts/16/ToolPane.aspx
+     ```
+   - **With query:**
+     ```powershell
+     DisplayMode=Edit&a=/ToolPane.aspx
+     ```
+   - **And referer:**
+      ```powershell
+     /_layouts/SignOut.aspx or "-"
+      ```
+✅ IoC Set 2 — CVE-2025-53770 (Suspicious file names)
+   - **Access to files matching:**
+        ```powershell
+        spinstall.aspx, spinstall*.aspx, ghostfile.aspx, debug_dev.js,
+        info.js, machinekey.aspx, ghost.aspx, etc.
+        ```
+   - **Located under:**
+        ```powershell
+        /_layouts/15/
+        /_layouts/16/
+        ```
+   - **With referer: **
+        ```powershell
+        /SignOut.aspx or -
+        ```
+✅ IoC Set 3 — Malicious IP addresses
+   - **The script dynamically downloads a threat intel list from:**
+        ```powershell
+        https://raw.githubusercontent.com/zach115th/BlockLists/main/emerging-threats/2025/toolshell/toolshell_ips.txt
+        ```
 
 ---
-
 
