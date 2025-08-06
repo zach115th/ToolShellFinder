@@ -14,6 +14,7 @@ This script is hacked together to help DFIR teams, sysadmins, and security profe
 - [Requirements](#requirements)
 - [How to Use](#how-to-use)
 - [Detection Logic](#detection-logic)
+- [References](#references)
 
 ---
 
@@ -101,3 +102,11 @@ This script is hacked together to help DFIR teams, sysadmins, and security profe
 
 ---
 
+## 📎 References
+
+- [CVE-2025-53770](https://nvd.nist.gov/vuln/detail/CVE-2025-53770)
+- [CVE-2025-53771](https://nvd.nist.gov/vuln/detail/CVE-2025-53771)
+- [Eye Security – ToolShell Analysis](https://research.eye.security/sharepoint-under-siege/)
+- [Microsoft Guidance](https://msrc.microsoft.com/blog/2025/07/customer-guidance-for-sharepoint-vulnerability-cve-2025-53770/)
+
+---
