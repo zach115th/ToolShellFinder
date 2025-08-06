@@ -15,6 +15,7 @@ This script is hacked together to help DFIR teams, sysadmins, and security profe
 - [How to Use](#how-to-use)
 - [Detection Logic](#detection-logic)
 - [References](#references)
+- [Summary](#summary)
 
 ---
 
@@ -90,7 +91,7 @@ This script is hacked together to help DFIR teams, sysadmins, and security profe
         /_layouts/15/
         /_layouts/16/
         ```
-   - **With referer: **
+   - **With referer:**
         ```powershell
         /SignOut.aspx or -
         ```
@@ -108,5 +109,11 @@ This script is hacked together to help DFIR teams, sysadmins, and security profe
 - [CVE-2025-53771](https://nvd.nist.gov/vuln/detail/CVE-2025-53771)
 - [Eye Security – ToolShell Analysis](https://research.eye.security/sharepoint-under-siege/)
 - [Microsoft Guidance](https://msrc.microsoft.com/blog/2025/07/customer-guidance-for-sharepoint-vulnerability-cve-2025-53770/)
+
+---
+
+## ✅ Summary
+
+**ToolShellFinder** is a fast, flexible, and battle-tested PowerShell script for detecting real-world exploitation of SharePoint zero-days via log review. Use it in your DFIR toolkit to catch what your EDR may have missed.
 
 ---
